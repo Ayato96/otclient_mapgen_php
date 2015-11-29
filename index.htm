@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>OTClient MapGen data parser (for LeafletJS)</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script>
+var threads = [];
+var yValue = [0,0];
+var zValue = [0,0];
+$(document).ready(function(){
+    $(".prepare").click(function(){
+        $.getJSON( "0_calculate.php", {threadsCount: $('#threadsNumber').val()}, function(data)
+		{
+			threads = data.threads;
+			yValue = data.y;
+			zValue = data.z;
+
+			$("#prepareLink").html($('<ul><li><a href="1_prepare_data.php?groundLevel=7&lowestUndergroundLevel=' + zValue[1] + '" target="_blank">1. PREPARE DATA</a></li></ul>'));
+	
+			var composeLinks = [];
+			$.each(data.threads, function(key, val)
+				{
+					composeLinks.push('<li><a href="2_compose.php?threadId=' + key + '&minX=' + val[0] + '&maxX=' + val[1] + '&minY=' + yValue[0] + '&maxY=' + yValue[1] + '&minZ=' + zValue[0] + '&maxZ=' + zValue[1] + '" target="_blank">2.' + key + '. COMPOSE LOWER LEVEL FLOORS - Thread ' + key + ' link</a></li>');
+				}
+			);
+			$("#composeLinks").html($( "<ul/>", {html: composeLinks.join( "" )}));
+			
+			var shadowLinks = [];
+			$.each(data.threads, function(key, val)
+				{
+					shadowLinks.push('<li><a href="3_compose_shadow.php?threadId=' + key + '&minX=' + val[0] + '&maxX=' + val[1] + '" target="_blank">3.' + key + '. ADD SHADOW TO LOWER LEVELS - Thread ' + key + ' link</a></li>');
+				}
+			);
+			$("#shadowLinks").html($( "<ul/>", {html: shadowLinks.join( "" )}));
+			
+			$("#tileGeneratorLink").html($('<ul><li><a href="4_tile_generator.php" target="_blank">4. GENERATE TILES FOR LeafletJS</a></li></ul>'));
+		});
+    });
+});
+</script>
+</head>
+<body>
+<h3>Before start <i>copy</i> (or <i>move</i>) 'map' folder from user directory [place where OTClient saved generated map] to this script directory.</h3>
+Threads number: <input type="number" id="threadsNumber" value="1" /><br />
+<h4>1 thread version will probably use all cores of CPU! In tests 1 thread rendering was fastest!</h4>
+<button class="prepare">Pre-compose (it may take a while..)</button><br />
+<div id="prepareLink">Pre-compose to get 'prepare' link.</div>
+<div id="composeLinks">Pre-compose to get 'compose' links.</div>
+<div id="shadowLinks">Pre-compose to get 'shadow' links.</div>
+<div id="tileGeneratorLink">Pre-compose to get 'tile generator' links.</div>
+
+</body>
+</html>
