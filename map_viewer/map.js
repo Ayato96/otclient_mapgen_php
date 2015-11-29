@@ -7,11 +7,12 @@ var mapConfig = {
 	minZoom: 4,
 	maxZoom: 18, // maximum zoom with full quality is 16
 	
-	streamOutfit: true,
 	streamUpdateURL: 'update.php',
 	disableClusteringAtZoom: 14, // disable grouping when zoomed in
-	streamHideOutfitOnZoom: 14, // show icons, not outfits when zoomed out
 	streamAnimationFramesPerSecond: 25, // smoother animation requires fast PC for high number of players online
+
+	streamOutfit: false,
+	streamHideOutfitOnZoom: 14, // show icons, not outfits when zoomed out
 	outfitGeneratorURL: 'http://outfit-images.ots.me/outfit.php?',
 	outfitAnimatedGeneratorURL: 'http://outfit-images.ots.me/animatedOutfits1080/animoutfit.php?'
 }
