@@ -7,11 +7,12 @@ var mapConfig = {
 	minZoom: 4,
 	maxZoom: 18, // maximum zoom with full quality is 16
 	
-	streamUpdateURL: 'update.php',
+	streamPlayers: false, // stream on/off
+	streamUpdateURL: 'update.php', // 'update.php' or 'update_outfits.php'
 	disableClusteringAtZoom: 14, // disable grouping when zoomed in
 	streamAnimationFramesPerSecond: 25, // smoother animation requires fast PC for high number of players online
 
-	streamOutfit: false,
+	streamOutfit: false, // change 'streamUpdateURL', if you set it to 'true'
 	streamHideOutfitOnZoom: 14, // show icons, not outfits when zoomed out
 	outfitGeneratorURL: 'http://outfit-images.ots.me/outfit.php?',
 	outfitAnimatedGeneratorURL: 'http://outfit-images.ots.me/animatedOutfits1080/animoutfit.php?'
@@ -73,7 +74,8 @@ var Game = {
 	init: function(startPosition)
 	{
 		Map.setCenter(startPosition, true);
-		Game.updateAnimations(1);
+		if(mapConfig.streamPlayers)
+			Game.updateAnimations(1);
 	},
 
 	getPlayersList: function()
