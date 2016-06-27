@@ -7,34 +7,53 @@ var mapConfig = {
 	minZoom: 4,
 	maxZoom: 18, // maximum zoom with full quality is 16
 	
-	streamPlayers: false, // stream on/off
-	streamUpdateURL: 'update.php', // 'update.php' or 'update_outfits.php'
+	streamPlayers: true, // stream on/off
+	streamUpdateURL: 'update.php',
+	streamUpdateOutfitsURL: 'update_outfits.php',
 	disableClusteringAtZoom: 14, // disable grouping when zoomed in
 	streamAnimationFramesPerSecond: 25, // smoother animation requires fast PC for high number of players online
 
-	streamOutfit: false, // change 'streamUpdateURL', if you set it to 'true'
+	streamOutfit: false,
 	streamHideOutfitOnZoom: 14, // show icons, not outfits when zoomed out
+	itemGeneratorURL: 'http://item-images.ots.me/1092/',
 	outfitGeneratorURL: 'http://outfit-images.ots.me/outfit.php?',
-	outfitAnimatedGeneratorURL: 'http://outfit-images.ots.me/animatedOutfits1080/animoutfit.php?'
+	outfitAnimatedGeneratorURL: 'http://outfit-images.ots.me/animatedOutfits1090/animoutfit.php?'
 }
 
+var tmpLocation = location.hash.slice(1).split(',');
+// #zoom,3,positon,32000,32000,7
+if(tmpLocation.length == 6 &&  parseInt(tmpLocation[1]) && parseInt(tmpLocation[3]) && parseInt(tmpLocation[4]) && parseInt(tmpLocation[5]))
+{
+	mapConfig.startZoom = parseInt(tmpLocation[1]);
+	mapConfig.startPosition = {x: parseInt(tmpLocation[3]), y: parseInt(tmpLocation[4]), z: parseInt(tmpLocation[5])};
+}
 var normalIcon = new L.Icon.Default();
 var followedIcon = new (L.Icon.Default.extend({
-			options: {
-				iconUrl: 'libs/images/marker-icon-red.png' 
-			}
-		 }))();
+	options: {
+		iconUrl: 'libs/images/marker-icon-red.png' 
+	}
+}))();
 var showedIcon = new (L.Icon.Default.extend({
-			options: {
-				iconUrl: 'libs/images/marker-icon-red.png' 
-			}
-		 }))();
+	options: {
+		iconUrl: 'libs/images/marker-icon-red.png' 
+	}
+}))();
 var map = L.map('map', {
 	center: new L.LatLng(-(mapConfig.startPosition.y / 2048), (mapConfig.startPosition.x / 2048)),
 	zoom: mapConfig.startZoom,
 	maxZoom: mapConfig.maxZoom,
 	crs: L.CRS.Simple
-	});
+
+});
+
+function onMapPositionChange()
+{
+	var pos = Map.getPosition();
+	location.hash = 'zoom,' + map.getZoom() + ',position,' + parseInt(pos[0]) + ',' + parseInt(pos[1]) + ',' + parseInt(pos[2]);
+	var positionString = location.origin + location.pathname + '#zoom,' + map.getZoom() + ',position,' + parseInt(pos[0]) + ',' + parseInt(pos[1]) + ',' + parseInt(pos[2]);
+	$('#location').val(positionString)
+}
+map.on('moveend', onMapPositionChange);
 
 var mapTilesLevelsLayers = [];
 var levelsNumber = 16;
@@ -128,7 +147,7 @@ var Game = {
 				if(mapConfig.streamOutfit)
 				{
 					direction = playerData[5];
-					outfit = {type: playerData[6], head: playerData[7], body: playerData[8], legs: playerData[9], feet: playerData[10], addons: playerData[11], mount: playerData[12]};
+					outfit = {type: playerData[6], typeEx: playerData[7], head: playerData[8], body: playerData[9], legs: playerData[10], feet: playerData[11], addons: playerData[12], mount: playerData[13]};
 				}
 				if(!player)
 				{
@@ -138,6 +157,8 @@ var Game = {
 				{
 					player.currentPosition = player.targetPosition;
 					player.targetPosition = newPosition;
+					player.outfit = outfit;
+					player.direction = direction;
 					// same floor, short movement distance
 					if(player.currentPosition.z == player.targetPosition.z &&
 						Math.abs(player.currentPosition.x - player.targetPosition.x) < 20 &&
@@ -183,7 +204,7 @@ var Game = {
 		else
 		{
 			Interface.lastUpdateChanged();
-			setTimeout(Game.updateAnimations, 1000, 0);
+			setTimeout(Game.updateAnimations, 1000, 1);
 		}
 	},
 
@@ -254,18 +275,37 @@ var Game = {
 							url= mapConfig.outfitGeneratorURL;
 						}
 						var divider = Math.pow(2, (22 - map.getZoom()));
-						playerIcon = new L.Icon({iconSize: [4096 / divider, 4096 / divider], iconAnchor: [3072 / divider, 3072 / divider], iconUrl: url + 'id=' + player.outfit.type + '&addons=' + player.outfit.addons + '&head=' + player.outfit.head + '&body=' + player.outfit.body + '&legs=' + player.outfit.legs + '&feet=' + player.outfit.feet + '&mount=' + player.outfit.mount + '&direction=' + direction});
+						if(player.outfit.typeEx > 0)
+						{
+							playerIcon = new L.Icon({iconSize: [2048 / divider, 2048 / divider], iconAnchor: [3072 / divider, 3072 / divider], iconUrl: mapConfig.itemGeneratorURL + player.outfit.typeEx + '.gif'});
+						}
+						else
+						{
+							playerIcon = new L.Icon({iconSize: [4096 / divider, 4096 / divider], iconAnchor: [3072 / divider, 3072 / divider], iconUrl: url + 'id=' + player.outfit.type + '&addons=' + player.outfit.addons + '&head=' + player.outfit.head + '&body=' + player.outfit.body + '&legs=' + player.outfit.legs + '&feet=' + player.outfit.feet + '&mount=' + player.outfit.mount + '&direction=' + direction});
+						}
 					}
 					else
 					{
 						playerIcon = (Game.getFollow() == player.id) ? followedIcon : ((Game.getShow() == player.id) ? showedIcon : normalIcon);
 					}
-					var marker = L.marker(new L.LatLng(-((player.currentPosition.y) / 2048), ((player.currentPosition.x) / 2048)), {
-						icon: playerIcon,
-						playerId: player.id
-					})
-					.bindLabel(player.name)
-					.on('click', Map.onMarkerClick);
+					if(player.outfit.typeEx > 0)
+					{
+						var marker = L.marker(new L.LatLng(-((player.currentPosition.y+1) / 2048), ((player.currentPosition.x+1) / 2048)), {
+							icon: playerIcon,
+							playerId: player.id
+						})
+						.bindLabel(player.name)
+						.on('click', Map.onMarkerClick);
+					}
+					else
+					{
+						var marker = L.marker(new L.LatLng(-((player.currentPosition.y) / 2048), ((player.currentPosition.x) / 2048)), {
+							icon: playerIcon,
+							playerId: player.id
+						})
+						.bindLabel(player.name)
+						.on('click', Map.onMarkerClick);
+					}
 					if(Game.getFollow() != player.id)
 					{
 						markers.addLayer(marker);
@@ -329,12 +369,17 @@ var Game = {
 			var data = {time: Date.now() / 1000, players: [[2,'aaAAAgffg', 1000+Math.floor( Math.random() * 7 ) , 1000, 7, 1, 129,114,45,88,13,1,0], [4,'CCAAAgffg', 1030+Math.floor( Math.random() * 7 ) , 1000+Math.floor( Math.random() * 7 ), 7, 2, 128,114,45,88,13,2,0]]}
 			Game.updateGameState(data);
 			*/
-			$.getJSON(mapConfig.streamUpdateURL, {x:Math.random()}, Game.updateGameState)
+
+			var jsonURL = mapConfig.streamUpdateURL;
+			if(mapConfig.streamPlayers)
+				jsonURL = mapConfig.streamUpdateOutfitsURL;
+
+			$.getJSON(jsonURL, {x:Math.random()}, Game.updateGameState)
 				.fail(function()
 				{
 					Interface.lastUpdateChanged();
 					console.log('Status Update Error');
-					setTimeout(Game.updateAnimations, 100, 0);
+					setTimeout(Game.updateAnimations, 100, 1);
 				});
 		}
 		else if(step > 0)
@@ -411,6 +456,11 @@ var Map = {
 		return Map.currentFloor;
 	},
 
+	getPosition: function()
+	{
+		return [map.getCenter().lng * 2048, map.getCenter().lat * -2048, Map.currentFloor];
+	},
+
 	setCenter: function(position, teleport)
 	{
 		Map.setFloor(position.z);
@@ -448,6 +498,7 @@ var Interface = {
 	floorChanged: function(floorId)
 	{
 		$('#floorLevel').val(floorId);
+		onMapPositionChange();
 	},
 
 	followTargetLost: function()
@@ -539,6 +590,7 @@ $("#searchForm").submit(function(event)
 
 Game.init(mapConfig.startPosition);
 map.setZoom(mapConfig.startZoom);
+
 $('#map').css('position', 'relative')
 .append('<div id="line1" style="height:3px;width:100%;background:repeating-linear-gradient(90deg,#DD3333,#DD3333 10px,transparent 10px,transparent 20px);top:50%;left:0;position:absolute"></div>')
 .append('<div id="line2" style="height:100%;width:3px;background:repeating-linear-gradient(0deg,#DD3333,#DD3333 10px,transparent 10px,transparent 20px);top:0;left:50%;position:absolute"></div>')
