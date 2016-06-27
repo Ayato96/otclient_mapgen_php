@@ -1,7 +1,7 @@
 <?php
 // config:
-$hiddenNames = ["GOD vod'ka", "Adm XX"];
-$SQL = new PDO('mysql:host=localhost;dbname=tfs', 'root', '');
+$hiddenNames = ["GM Gesior", "Secret Character"];
+$SQL = new PDO('mysql:host=localhost;dbname=tfs', 'root', 'secretpassword');
 
 
 // CODE
