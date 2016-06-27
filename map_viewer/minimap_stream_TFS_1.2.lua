@@ -1,5 +1,5 @@
 local levelToHideName = 50
--- TFS 1.2 Live Stream
+-- TFS 1.1 Live Stream
 -- INSTALL DATABASE SCHEMA IN PHPMYADMIN BEFORE YOU INSTALL THIS SCRIPT ON OTS
 --[[ Database schema:
 CREATE TABLE IF NOT EXISTS `minimap_stream` (
@@ -53,12 +53,13 @@ function onThink(interval)
 		for i = 1, #players do
 			player = players[i]
 			if player:getGroup():getId() < 2 then
-				pos = player:getPosition()
+				local pos = player:getPosition()
+				local outfit = player:getOutfit()
 
 				if(player:getLevel() < levelToHideName) then
-					info = info .. '[' .. player:getGuid() .. ',"' .. enc(player:getName()) .. '",' .. pos.x .. ',' .. pos.y .. ',' .. pos.z .. ']'
+					info = info .. '[' .. player:getGuid() .. ',"' .. enc(player:getName()) .. '",' .. pos.x .. ',' .. pos.y .. ',' .. pos.z .. ',' .. player:getDirection() .. ',' .. outfit.lookType .. ',' .. outfit.lookTypeEx .. ',' .. outfit.lookHead .. ',' .. outfit.lookBody .. ',' .. outfit.lookLegs .. ',' .. outfit.lookFeet .. ',' .. outfit.lookAddons .. ',' .. outfit.lookMount .. ']'
 				else
-					info = info .. '[' .. player:getGuid() .. ',"",' .. pos.x .. ',' .. pos.y .. ',' .. pos.z .. ']'
+					info = info .. '[' .. player:getGuid() .. ',"",' .. pos.x .. ',' .. pos.y .. ',' .. pos.z .. ',' .. player:getDirection() .. ',' .. outfit.lookType .. ',' .. outfit.lookTypeEx .. ',' .. outfit.lookHead .. ',' .. outfit.lookBody .. ',' .. outfit.lookLegs .. ',' .. outfit.lookFeet .. ',' .. outfit.lookAddons .. ',' .. outfit.lookMount .. ']'
 				end
 				if(i ~= #players) then
 					info = info .. ','
